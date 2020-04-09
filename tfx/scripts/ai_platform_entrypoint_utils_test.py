@@ -18,13 +18,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import json
 import os
 from typing import Any, Dict, Text
 import tensorflow as tf
 
+from tfx.proto.orchestration import execution_result_pb2
 from tfx.scripts import ai_platform_entrypoint_utils
 from tfx.types import standard_artifacts
+from tfx.utils import io_utils
 
 _ARTIFACT_1 = standard_artifacts.StringType()
 _KEY_1 = 'input_1'
@@ -53,13 +54,17 @@ class EntrypointUtilsTest(tf.test.TestCase):
         _KEY_2: [_ARTIFACT_2],
     }
     source_data_dir = os.path.join(os.path.dirname(__file__), 'testdata')
-    with open(os.path.join(source_data_dir,
-                           'artifacts.json')) as artifact_json_file:
-      self._artifacts = json.load(artifact_json_file)
-
-    with open(os.path.join(source_data_dir,
-                           'exec_properties.json')) as properties_json_file:
-      self._properties = json.load(properties_json_file)
+    # Use two protos to store the testdata.
+    artifacts_pb = execution_result_pb2.ExecutorInvocation()
+    io_utils.parse_pbtxt_file(
+        os.path.join(source_data_dir, 'artifacts.pbtxt'),
+        artifacts_pb)
+    self._artifacts = artifacts_pb.inputs
+    properties_pb = execution_result_pb2.ExecutorInvocation()
+    io_utils.parse_pbtxt_file(
+        os.path.join(source_data_dir, 'exec_properties.pbtxt'),
+        properties_pb)
+    self._properties = properties_pb.execution_properties
 
   def testParseRawArtifactDict(self):
     # TODO(b/131417512): Add equal comparison to types.Artifact class so we

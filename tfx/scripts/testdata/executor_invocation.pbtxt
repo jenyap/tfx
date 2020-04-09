@@ -1,0 +1,51 @@
+# proto-file: third_party/tfx/proto/orchestration/execution_result.proto
+# proto-message: ExecutorInvocation
+
+inputs {
+  key: "input_1"
+  value {
+    artifacts {
+      uri: "gs://root/input_1/"
+      type_id: 1
+      type: "ExternalArtifact"
+    }
+  }
+}
+
+inputs {
+  key: "input_2"
+  value {
+    artifacts: {
+      uri: "gs://root/input_2/"
+      type_id: 1
+      type: "ExternalArtifact"
+    }
+  }
+}
+
+outputs {
+  key: "output"
+  value {
+    artifacts {
+      uri: "gs://root/output/"
+      type_id: 2
+      type: "Examples"
+    }
+  }
+}
+
+execution_properties {
+  key: "key_1"
+  value: {
+    string_value: "value_1"
+  }
+}
+
+execution_properties {
+  key: "key_2"
+  value: {
+    int_value: 42
+  }
+}
+
+output_metadata_uri: "gs://root/output_metadata/"

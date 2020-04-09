@@ -1,0 +1,24 @@
+# proto-file: third_party/tfx/proto/orchestration/execution_result.proto
+# proto-message: ExecutorInvocation
+
+inputs {
+  key: "input_1"
+  value {
+    artifacts {
+      uri: "gs://root/string/"
+      type_id: 1
+      type: "StringType"
+    }
+  }
+}
+
+inputs {
+  key: "input_2"
+  value {
+    artifacts: {
+      uri: "gs://root/model/"
+      type_id: 2
+      type: "ModelBlessing"
+    }
+  }
+}

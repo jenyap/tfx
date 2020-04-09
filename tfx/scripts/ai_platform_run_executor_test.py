@@ -18,14 +18,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import json
+import os
 from typing import Any, Dict, List, Text
 import mock
 import tensorflow as tf
-
+from google.protobuf import json_format
 from tfx.components.base import base_executor
+from tfx.proto.orchestration import execution_result_pb2
 from tfx.scripts import ai_platform_run_executor
 from tfx.types import artifact
+from tfx.utils import io_utils
 
 
 class _ArgsCapture(object):
@@ -51,53 +53,20 @@ class _FakeExecutor(base_executor.BaseExecutor):
     args_capture.exec_properties = exec_properties
 
 
-_INPUT_DICT = {
-    "input_1": {
-        "artifacts": [{
-            "uri": "gs://root/input_1/",
-            "typeId": 1,
-            "type": "ExternalArtifact",
-        }]
-    },
-    "input_2": {
-        "artifacts": [{
-            "uri": "gs://root/input_2/",
-            "typeId": 1,
-            "type": "ExternalArtifact"
-        }]
-    },
-}
-
-_OUTPUT_DICT = {
-    "output": {
-        "artifacts": [{
-            "uri": "gs://root/output/",
-            "typeId": 2,
-            "type": "Examples"
-        }]
-    }
-}
-
-_EXEC_PROPERTIES_PB = {
-    "key_1": {
-        "stringValue": "value_1"
-    },
-    "key_2": {
-        "intValue": 42
-    },
-}
-
 _EXEC_PROPERTIES = {"key_1": "value_1", "key_2": 42}
-
-_JSON_SERIALIZED_METADATA = {
-    "inputs": _INPUT_DICT,
-    "outputs": _OUTPUT_DICT,
-    "execution_properties": _EXEC_PROPERTIES_PB,
-    "output_metadata_uri": "gs://root/output_metadata/"
-}
 
 
 class RunExecutorTest(tf.test.TestCase):
+
+  def setUp(self):
+    super(RunExecutorTest, self).setUp()
+    self._serialized_invocation = execution_result_pb2.ExecutorInvocation()
+    io_utils.parse_pbtxt_file(
+        os.path.join(
+            os.path.dirname(__file__),
+            "testdata",
+            "executor_invocation.pbtxt"),
+        self._serialized_invocation)
 
   @mock.patch.object(
       tf.io.gfile.GFile, "write", return_value=True, autospec=True)
@@ -106,18 +75,17 @@ class RunExecutorTest(tf.test.TestCase):
     with _ArgsCapture() as args_capture:
       args = [
           "--executor_class_path",
-          "%s.%s" %
-          (_FakeExecutor.__module__, _FakeExecutor.__name__),
+          "%s.%s" % (_FakeExecutor.__module__, _FakeExecutor.__name__),
           "--json_serialized_metadata",
-          json.dumps(_JSON_SERIALIZED_METADATA)
+          json_format.MessageToJson(self._serialized_invocation)
       ]
       ai_platform_run_executor.main(args)
       # TODO(b/131417512): Add equal comparison to types.Artifact class so we
       # can use asserters.
       self.assertSetEqual(
-          set(args_capture.input_dict.keys()), set(_INPUT_DICT.keys()))
+          set(args_capture.input_dict.keys()), set(["input_1", "input_2"]))
       self.assertSetEqual(
-          set(args_capture.output_dict.keys()), set(_OUTPUT_DICT.keys()))
+          set(args_capture.output_dict.keys()), set(["output"]))
       self.assertDictEqual(args_capture.exec_properties, _EXEC_PROPERTIES)
 
 

@@ -19,7 +19,6 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import json
 from typing import List, Text
 import absl
 
@@ -50,16 +49,18 @@ def _run_executor(args: argparse.Namespace, beam_args: List[Text]) -> None:
   absl.logging.set_verbosity(absl.logging.INFO)
 
   # Rehydrate inputs/outputs/exec_properties from the serialized metadata.
-  full_metadata_dict = json.loads(args.json_serialized_metadata)
+  executor_invocation = execution_result_pb2.ExecutorInvocation()
+  json_format.Parse(
+      args.json_serialized_metadata, executor_invocation)
 
-  inputs_dict = full_metadata_dict['inputs']
-  outputs_dict = full_metadata_dict['outputs']
-  exec_properties_dict = full_metadata_dict['execution_properties']
+  inputs_dict = executor_invocation.inputs
+  outputs_dict = executor_invocation.outputs
+  exec_properties = executor_invocation.execution_properties
 
   inputs = ai_platform_entrypoint_utils.parse_raw_artifact_dict(inputs_dict)
   outputs = ai_platform_entrypoint_utils.parse_raw_artifact_dict(outputs_dict)
   exec_properties = ai_platform_entrypoint_utils.parse_execution_properties(
-      exec_properties_dict)
+      exec_properties)
   absl.logging.info(
       'Executor %s do: inputs: %s, outputs: %s, exec_properties: %s' % (
           args.executor_class_path, inputs, outputs, exec_properties))
@@ -71,7 +72,7 @@ def _run_executor(args: argparse.Namespace, beam_args: List[Text]) -> None:
   executor.Do(inputs, outputs, exec_properties)
 
   # Log the output metadata to a file. So that it can be picked up by MP.
-  metadata_uri = full_metadata_dict['output_metadata_uri']
+  metadata_uri = executor_invocation.output_metadata_uri
   output_metadata = execution_result_pb2.ExecutorOutput()
   for key, output_artifacts in outputs.items():
     # Assuming each output is a singleton artifact.

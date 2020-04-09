@@ -1,0 +1,16 @@
+# proto-file: third_party/tfx/proto/orchestration/execution_result.proto
+# proto-message: ExecutorInvocation
+
+execution_properties {
+  key: "input_config"
+  value: {
+    string_value: "input config string"
+  }
+}
+
+execution_properties {
+  key: "output_config"
+  value: {
+    string_value: "{ \"split_config\": { \"splits\": [ { \"hash_buckets\": 2, \"name\": \"train\" }, { \"hash_buckets\": 1, \"name\": \"eval\" } ] } }"
+  }
+}
