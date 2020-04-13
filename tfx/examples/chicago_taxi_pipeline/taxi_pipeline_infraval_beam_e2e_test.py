@@ -75,7 +75,7 @@ class TaxiPipelineInfravalBeamEndToEndTest(tf.test.TestCase):
     self.assertExecutedOnce('Transform')
 
   def testTaxiPipelineBeam(self):
-    num_components = 10
+    num_components = 9
 
     BeamDagRunner().run(
         taxi_pipeline_beam._create_pipeline(
